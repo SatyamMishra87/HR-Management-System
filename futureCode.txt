@@ -1,0 +1,18 @@
+
+  // leaveApplications.forEach(l =>
+  //     console.log("Leave:", {
+  //         startDate: l.startDate,
+  //         endDate: l.endDate,
+  //         policyType: l.leavePolicyId?.policyType,
+  //         days: l.leaveDays?.length
+  //     })
+  // );
+
+
+const holidayRanges = holidays.map(h => ({
+ start: h.startDate,
+ end: h.endDate || h.startDate
+}));
+console.log(holidayRanges);
+
+

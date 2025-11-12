@@ -1,0 +1,308 @@
+// import User from "../models/auth.js";
+// import Shift from "../models/Shift.js";
+// import Attendance from "../models/Attendance.js";
+// import Holiday from "../models/Holiday.js";
+// import LeaveApplication from "../models/leaveApplication.js";
+// import { istStartOfDayToUTC, istEndOfDayToUTC, sameDay, getUTCRangeForISTDate, parseYMD } from "../utils/time.js";
+// import { totalMonthSalary } from "../utils/helper.js";
+// import { ENUMS } from "./constants.js";
+
+// const SalaryCalculationfunction = async (userId, startDate, endDate) => {
+
+//     if (!userId || !startDate || !endDate) throw new Error("userId , startDate and endDate is required");
+
+//     const user = await User.findById(userId);
+//     if (!user) throw new Error("User not found for this Id");
+
+//     const shift = await Shift.findOne({ assignUsers: userId });
+//     if (!shift) throw new Error("User not  assigned to any shift");
+
+//     const start = istStartOfDayToUTC(startDate);
+//     const end = endDate ? istEndOfDayToUTC(endDate) : istEndOfDayToUTC(startDate);
+
+//     console.log("Converted Dates:", start, end);
+
+
+//     const holidays = await Holiday.find({
+//         assignUsers: userId,
+//         $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }]
+//     });
+//     console.log(holidays);
+
+//     const leaveApplication = await LeaveApplication.find({
+//         userId,
+//         status: ENUMS.statusType.APPROVED,
+//         $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }]
+//     }).populate("leavePolicyId");
+
+//     console.log("leaveapplication", leaveApplication);
+
+//     const attendance = await Attendance.find({
+//         userId,
+//         date: { $gte: start, $lte: end },
+//         clockIn: { $ne: null }
+//     });
+//     console.log(attendance);
+//     const startutcmidnight = new Date(startDate);
+//     const endutcmidnight = new Date(endDate);
+//     let presentDays = 0,
+//         totalWorkingDays = 0,
+//         countWeekend =0,
+//         countHolidays =0,
+//         absentDays = 0,
+//         paidLeaveDays = 0,
+//         unpaidLeaveDays = 0;
+
+//     for (let curdate = startutcmidnight.getTime(); curdate <= endutcmidnight.getTime(); curdate += 24 * 60 * 60 * 1000) {
+//         const curUTC = new Date(new Date(curdate).getTime() - 5.5 * 60 * 60 * 1000);
+//         console.log(curUTC)
+//         const dayOfWeek = curUTC.getDay();
+//         console.log(dayOfWeek);
+//         const shiftday = shift?.days.get(String(dayOfWeek));
+//         console.log(shiftday)
+//         if (shiftday && shiftday?.dayStatus === ENUMS.DAY_STATUS.WEEKEND) {
+//             countWeekend++;
+//             console.log("weekend countend"); continue;
+//         }
+//         const isHoliday = holidays.some(d => d.startDate <= curUTC && d.endDate >= curUTC);
+
+//         if (isHoliday){
+//             countHolidays++;
+//              continue;
+
+//         } 
+//         totalWorkingDays++;
+
+//         let leaveFraction = 0,
+//             isPaidLeave = false,
+//             isUnpaidLeave = false;
+
+//         for (let lp of leaveApplication) {
+//             let policy = lp.leavePolicyId;
+//             const leaveDaysFound = lp.leaveDays.find(d => d.date <= curUTC && d.date >= curUTC);
+//             if (leaveDaysFound) {
+//                 leaveFraction = (leaveDaysFound.leaveType === ENUMS.leaveType.FULL) ? 1 : 0.5;
+//                 console.log("leaveFraction", leaveFraction)
+//                 if (policy && policy.policyType === ENUMS.leavePolicyType.paidLeave) {
+//                     isPaidLeave = true;
+//                     console.log(isPaidLeave)
+//                 } else if (policy && policy.policyType === ENUMS.leavePolicyType.unpaidLeave) {
+//                     isUnpaidLeave = true;
+//                     console.log(isUnpaidLeave)
+//                 }
+//                 break;
+//             }
+//         }
+
+//         const hasAttendance = attendance.some(d => d.date <= curUTC && d.date >= curUTC);
+
+//         if (leaveFraction === 1) {
+//             if (isPaidLeave) paidLeaveDays += 1;
+//             else if (isUnpaidLeave) unpaidLeaveDays += 1;
+//             else absentDays += 1;
+//         } else if (leaveFraction === 0.5) {
+//             if (hasAttendance) presentDays += 0.5;
+//             else absentDays += 0.5;
+//             if (isPaidLeave) paidLeaveDays += 0.5;
+//             else if (isUnpaidLeave) unpaidLeaveDays += 0.5;
+//         }
+//         else {
+//             if (hasAttendance) presentDays += 1;
+//             else absentDays += 1;
+//         }
+
+//     }
+//     const salarySlip = await totalMonthSalary(userId, start, end);
+//     console.log("Salary Slip:", salarySlip);
+
+//     const perDaySalary = salarySlip.salary / (totalWorkingDays || 1);
+//     const totalUnpaidDays = unpaidLeaveDays + absentDays;
+//     const payableDays = presentDays + paidLeaveDays;
+//     const payableSalary = perDaySalary * payableDays;
+//     const unpaidDeduction = perDaySalary * totalUnpaidDays;
+//     const netSalary = Math.max(0, salarySlip.salary - unpaidDeduction);
+//     return {
+//         totalWorkingDays,
+//         countWeekend,
+//         countHolidays,
+//         presentDays,
+//         absentDays,
+//         paidLeaveDays,
+//         unpaidLeaveDays,
+//         totalUnpaidDays,
+//         perDaySalary: perDaySalary.toFixed(2),
+//         payableDays,
+//         payableSalary: payableSalary.toFixed(2),
+//         unpaidDeduction: unpaidDeduction.toFixed(2),
+//         netSalary: netSalary.toFixed(2),
+//     };
+
+// }
+
+// export default SalaryCalculationfunction;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            // case "calculateSalaryDetails": {
+            //     const { userId, startDate, endDate } = data;
+            //     if (!userId || !startDate || !endDate)
+            //         return callback({ success: false, error: "fields are required" });
+
+            //     const shift = await Shift.findOne({ assignUsers: userId });
+            //     if (!shift) return callback({ success: false, error: "Shift not assigned to user" });
+
+            //     const start = istStartOfDayToUTC(startDate);
+            //     const end = endDate ? istEndOfDayToUTC(endDate) : istEndOfDayToUTC(startDate);
+            //     console.log("Converted Dates:", { start, end });
+
+            //     if (end < start) return callback({ success: false, error: "endDate cannot be before startDate" });
+
+            //     const holidays = await Holiday.find({
+            //         assignUsers: userId,
+            //         $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }]
+            //     }).select("startDate endDate");
+
+            //     console.log(holidays);
+            //     console.log("Holidays fetched:", holidays.length);
+
+            //     const leaveApplications = await LeaveApplication.find({
+            //         userId,
+            //         status: ENUMS.statusType.APPROVED,
+            //         $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }]
+            //     }).populate("leavePolicyId");
+
+            //     console.log("Leave Applications fetched:", leaveApplications.length);
+
+            //     const allAttendances = await Attendance.find({
+            //         userId,
+            //         date: { $gte: start, $lte: end },
+            //         clockIn: { $ne: null }
+            //     });
+            //     console.log("Attendance fetched:", allAttendances.length);
+            //     allAttendances.forEach(a =>
+            //         console.log("Attendance:", "date :-", a.date, "clock-In:-", a.clockIn, "clock-out:-", a.clockOut))
+
+            //     let totalWorkingDays = 0,
+            //         presentDays = 0,
+            //         absentDays = 0,
+            //         paidLeaveDays = 0,
+            //         unpaidLeaveDays = 0,
+            //         countHolidays = 0,
+            //         countWeekend = 0;
+
+            //     const { y: sy, m: sm, d: sd } = parseYMD(startDate);
+            //     const { y: ey, m: em, d: ed } = parseYMD(endDate);
+            //     let iterUTC = Date.UTC(sy, sm - 1, sd);
+            //     console.log("iterutc", iterUTC)
+            //     const endIterUTC = Date.UTC(ey, em - 1, ed);
+            //     console.log("enditerutc", endIterUTC)
+
+            //     console.log("Iteration Start:", new Date(iterUTC), "-", new Date(endIterUTC));
+
+            //     for (let curUTC = iterUTC; curUTC <= endIterUTC; curUTC += 24 * 60 * 60 * 1000) {
+            //         console.log("Curutc: -", curUTC)
+            //         const curDateObj = new Date(curUTC);
+            //         const y = curDateObj.getUTCFullYear();
+            //         const m = curDateObj.getUTCMonth() + 1;
+            //         const d = curDateObj.getUTCDate();
+
+            //         const { startUTC, endUTC } = getUTCRangeForISTDate(y, m, d);
+            //         console.log("\nDate Loop:", { curDateObj, startUTC, endUTC });
+
+            //         const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+            //         const shiftDay = shift.days.get(String(dayOfWeek));
+            //         console.log("Day:", dayOfWeek, "ShiftDay:", shiftDay?.dayStatus);
+
+            //         if (!shiftDay || shiftDay.dayStatus === ENUMS.DAY_STATUS.WEEKEND) {
+            //             countWeekend++;
+            //             console.log("Weekend counted");
+            //             continue;
+            //         }
+
+            //         const isHoliday = holidays.some(h => startUTC <= h.endDate && endUTC >= h.startDate);
+            //         if (isHoliday) {
+            //             countHolidays++;
+            //             console.log("Holiday counted:", startUTC);
+            //             continue;
+            //         }
+
+            //         totalWorkingDays++;
+            //         console.log("Working day counted:", totalWorkingDays);
+
+            //         let leaveFraction = 0;
+            //         let isPaidLeave = false;
+            //         let isUnpaidLeave = false;
+
+            //         for (const leave of leaveApplications) {
+            //             const policy = leave.leavePolicyId;
+            //             const found = (leave.leaveDays || []).find(lday => sameDay(lday.date, startUTC));
+            //             if (found) {
+            //                 leaveFraction = (found.leaveType === ENUMS.leaveType.FULL) ? 1 : 0.5;
+            //                 if (policy && policy.policyType === ENUMS.leavePolicyType.paidLeave)
+            //                     isPaidLeave = true;
+            //                 else if (policy && policy.policyType === ENUMS.leavePolicyType.unpaidLeave)
+            //                     isUnpaidLeave = true;
+            //                 console.log("Leave found:", { leaveFraction, isPaidLeave, isUnpaidLeave });
+            //                 break;
+            //             }
+            //         }
+
+            //         const dayAttendances = allAttendances.filter(a =>
+            //             a.date >= startUTC && a.date <= endUTC
+            //         );
+            //         const hasAttendance = dayAttendances.length > 0;
+            //         console.log("Day attendance:", hasAttendance, dayAttendances.map(a => a.date));
+
+            //         if (leaveFraction === 1) {
+            //             if (isPaidLeave) paidLeaveDays += 1;
+            //             else if (isUnpaidLeave) unpaidLeaveDays += 1;
+            //             else absentDays += 1;
+            //         } else if (leaveFraction === 0.5) {
+            //             if (hasAttendance) presentDays += 0.5;
+            //             else absentDays += 0.5;
+            //             if (isPaidLeave) paidLeaveDays += 0.5;
+            //             else if (isUnpaidLeave) unpaidLeaveDays += 0.5;
+            //         }
+            //         else {
+            //             if (hasAttendance) presentDays += 1;
+            //             else absentDays += 1;
+            //         }
+            //     }
+            //     const salarySlip = await totalMonthSalary(userId, start, end);
+            //     console.log("Salary Slip:", salarySlip);
+
+            //     const perDaySalary = salarySlip.salary / (totalWorkingDays || 1);
+            //     const totalUnpaidDays = unpaidLeaveDays + absentDays;
+            //     const payableDays = presentDays + paidLeaveDays;
+            //     const payableSalary = perDaySalary * payableDays;
+            //     const unpaidDeduction = perDaySalary * totalUnpaidDays;
+            //     const netSalary = Math.max(0, salarySlip.salary - unpaidDeduction);
+            //     return callback({
+            //         success: true,
+            //         totalWorkingDays,
+            //         countWeekend,
+            //         countHolidays,
+            //         presentDays,
+            //         absentDays,
+            //         paidLeaveDays,
+            //         unpaidLeaveDays,
+            //         totalUnpaidDays,
+            //         perDaySalary: perDaySalary.toFixed(2),
+            //         payableDays,
+            //         payableSalary: payableSalary.toFixed(2),
+            //         unpaidDeduction: unpaidDeduction.toFixed(2),
+            //         netSalary: netSalary.toFixed(2),
+            //     });
+            // }
