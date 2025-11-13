@@ -13,3 +13,5 @@ console.log(pathname);
 const filename = "index.js"
 const isAbsoulate = path.isAbsolute(filename);
 console.log(isAbsoulate);
+
+// for testing purpose
