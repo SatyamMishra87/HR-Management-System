@@ -1,1 +1,2 @@
 this is my hr management system that help many people to track there employee work 
+main changes
