@@ -115,3 +115,37 @@ export const parseYMD = (s) => {
   return { y, m: mm, d: dd };
 };
 
+
+ // Convert UTC to IST ===
+// function convertUTCToIST(date) {
+//   const IST_OFFSET = -330; // minutes
+//   return new Date(date.getTime() - (IST_OFFSET * 60 * 1000));
+// }
+
+// const utcDate = new Date(); // Assume this is UTC
+// const istDate = convertUTCToIST(utcDate);
+
+// console.log("UTC :", utcDate.toISOString());
+// console.log("IST :", istDate.toISOString());
+
+
+
+ // Function to get the attendance date at midnight IST==== 
+// const IST_OFFSET_MIN = 330; // IST is UTC +5:30 ,  330 = 5*60 + 30 = 5.5 hours in minutes
+//  const getAttendanceDate = (date = new Date()) => {
+//   const ist = new Date(date.getTime() + IST_OFFSET_MIN * 60 * 1000);
+//   console.log("ist" , ist)
+//   const y = ist.getUTCFullYear();
+//   console.log("y" , y)
+//   const m = ist.getUTCMonth();
+//     console.log("m" , m)
+//   const d = ist.getUTCDate();
+//     console.log("d" , d)
+//   const midnightISTinUTCms = Date.UTC(y, m, d, 0, 0, 0) - IST_OFFSET_MIN * 60 * 1000;
+//   console.log("midnightISTinUTCms" , midnightISTinUTCms)
+
+//   return new Date(midnightISTinUTCms);
+// };
+
+// const attendanceDate = getAttendanceDate();
+// console.log("Attendance Date (IST Midnight in UTC):", attendanceDate.toISOString());  // 2025-11-18T18:30:00.000Z  
