@@ -1,4 +1,4 @@
-import app from "./app.js";
+import {createApp} from "./app.js";
 import http from "http";
 import dotenv from "dotenv";
 import dbConnect from "./config/db.js";
@@ -14,6 +14,7 @@ const PORT = process.env.PORT;
     try {
         await dbConnect();
         await redisConnect();
+        const app = createApp();
         const httpServer = http.createServer(app);
        const  io =  initSocket(httpServer)
        socketRoutes(io);
